@@ -1,85 +1,85 @@
-\<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <title>Paper Drop Animation</title>
   <link rel="stylesheet" href="style.css">
   <style>
     body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #111;
-}
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
+    }
 
-.scene {
-  perspective: 1500px; /* increased for stronger 3D effect */
-}
+    .scene {
+      perspective: 1500px;
+      /* increased for stronger 3D effect */
+    }
 
-.paper {
-  width: 300px;
-  height: 400px;
-  cursor: pointer;
-  transform-origin: bottom center;
-  transform-style: preserve-3d;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-  will-change: transform;
-}
+    .paper {
+      width: 300px;
+      height: 400px;
+      cursor: pointer;
+      transform-origin: bottom center;
+      transform-style: preserve-3d;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      will-change: transform;
+    }
 
-.paper.fallen {
-  animation: smoothPaperDrop 1.4s ease-in forwards;
-}
+    .paper.fallen {
+      animation: smoothPaperDrop 1.4s ease-in forwards;
+    }
 
-@keyframes smoothPaperDrop {
-  0% {
-    transform: rotateX(0deg);
-  }
+    @keyframes smoothPaperDrop {
+      0% {
+        transform: rotateX(0deg);
+      }
 
-  50% {
-    transform: rotateX(45deg);
-  }
+      50% {
+        transform: rotateX(45deg);
+      }
 
-  70%{
-    transform: rotateX(90deg);
-  }
-  75%{
-    transform: rotateX(87deg);
-  }
-  85% {
-    transform: rotateX(90deg);
-  }
-  90%{
-    transform: rotateX(88deg);
-  }
-  100% {
-    transform: rotateX(90deg);
-  }
-}
+      70% {
+        transform: rotateX(90deg);
+      }
 
+      75% {
+        transform: rotateX(87deg);
+      }
+
+      85% {
+        transform: rotateX(90deg);
+      }
+
+      90% {
+        transform: rotateX(88deg);
+      }
+
+      100% {
+        transform: rotateX(90deg);
+      }
+    }
   </style>
 </head>
+
 <body>
 
   <div class="scene">
-    <img 
-
-      src="https://uploads.onecompiler.io/43uqwkkqt/44ay58ed5/sample.png"
-      class="paper"
-      id="paper"
-      alt="Paper Image"
-    />
+    <img src="https://uploads.onecompiler.io/43uqwkkqt/44ay58ed5/sample.png" class="paper" id="paper"
+      alt="Paper Image" />
   </div>
 
   <script>
     const paper = document.getElementById("paper");
 
 
-paper.addEventListener("click", () => {
-  paper.classList.toggle("fallen");
-});
+    paper.addEventListener("click", () => {
+      paper.classList.toggle("fallen");
+    });
   </script>
 </body>
 
 </html>
-
