@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Infinite Rotating Gallery</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      background: radial-gradient(circle at center, #111, #000);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      font-family: system-ui;
+    }
+
+    .scene {
+      width: 100vw;
+      height: 100vh;
+      perspective: 1200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .carousel {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      transform-style: preserve-3d;
+    }
+
+    .item {
+      position: absolute;
+      width: 180px;
+      height: 240px;
+      top: 20%;
+      left: 30%;
+      background-size: cover;
+      background-position: center;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      transition: transform 0.1s linear;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="scene">
+    <div class="carousel" id="carousel"></div>
+  </div>
+
+  <script>
+    const carousel = document.getElementById("carousel");
+
+    const images = [
+      "https://picsum.photos/id/1015/400/600",
+      "https://picsum.photos/id/1016/400/600",
+      "https://picsum.photos/id/1018/400/600",
+      "https://picsum.photos/id/1020/400/600",
+      "https://picsum.photos/id/1024/400/600",
+      "https://picsum.photos/id/1027/400/600",
+      "https://picsum.photos/id/1035/400/600",
+      "https://picsum.photos/id/1038/400/600"
+    ];
+
+    const radius = 500;
+    const count = images.length;
+    const step = (Math.PI * 2) / count;
+
+    let rotation = 0;
+    let velocity = 0;
+
+    let tiltX = 0;
+    let tiltVelocity = 0;
+    const maxTilt = 30;
+
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    images.forEach((src, i) => {
+      const item = document.createElement("div");
+      item.className = "item";
+      item.style.backgroundImage = `url(${src})`;
+      item.dataset.baseAngle = i * step;
+      carousel.appendChild(item);
+    });
+
+    const items = document.querySelectorAll(".item");
+
+    function clamp(v, min, max) {
+      return Math.max(min, Math.min(max, v));
+    }
+
+    function update() {
+      rotation += velocity;
+      velocity *= 0.95;
+
+      tiltX += tiltVelocity;
+      tiltVelocity *= 0.9;
+      tiltX = clamp(tiltX, -maxTilt, maxTilt);
+
+      // ONLY tilt the carousel
+      carousel.style.transform = `rotateX(${tiltX}deg)`;
+
+      items.forEach(item => {
+        const angle = parseFloat(item.dataset.baseAngle) + rotation;
+
+        const x = Math.sin(angle) * radius;
+        const z = Math.cos(angle) * radius;
+
+        const scale = (z + radius) / (2 * radius) + 0.5;
+
+        item.style.transform = `
+        translateX(${x}px)
+        translateZ(${z}px)
+        scale(${scale})
+      `;
+
+        item.style.zIndex = Math.floor(scale * 1000);
+      });
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+
+    function onDown(x, y) {
+      isDragging = true;
+      lastX = x;
+      lastY = y;
+    }
+
+    function onMove(x, y) {
+      if (!isDragging) return;
+
+      const dx = x - lastX;
+      const dy = y - lastY;
+
+      velocity = dx * 0.002;
+      tiltVelocity = -dy * 0.15;
+
+      lastX = x;
+      lastY = y;
+    }
+
+    function onUp() {
+      isDragging = false;
+    }
+
+    window.addEventListener("mousedown", e => onDown(e.clientX, e.clientY));
+    window.addEventListener("mousemove", e => onMove(e.clientX, e.clientY));
+    window.addEventListener("mouseup", onUp);
+
+    window.addEventListener("touchstart", e =>
+      onDown(e.touches[0].clientX, e.touches[0].clientY)
+    );
+    window.addEventListener("touchmove", e =>
+      onMove(e.touches[0].clientX, e.touches[0].clientY)
+    );
+    window.addEventListener("touchend", onUp);
+  </script>
+
+</body>
+
+</html>
