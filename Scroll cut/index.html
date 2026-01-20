@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Scroll Cut!</title>
+  <style>
+    body {
+      background: #0e0e0e;
+    }
+
+    .spacer {
+      height: 100vh;
+    }
+
+    .join-section {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      /* key */
+    }
+
+    .image-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .piece {
+      position: absolute;
+      inset: 0;
+      background-image: url("https://picsum.photos/id/1015/800/600");
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      /* triggers GPU rendering */
+    }
+
+    .p1 {
+      clip-path: polygon(0 0, 31% 0, 56% 30%, 0 81%);
+    }
+
+    .p2 {
+      clip-path: polygon(100% 0, 31% 0, 56% 30%, 100% 52%);
+    }
+
+    .p4 {
+      clip-path: polygon(100% 100%, 57% 100%, 56% 30%, 100% 52%);
+    }
+
+    .p3 {
+      clip-path: polygon(0 100%, 57% 100%, 56% 30%, 0 81%);
+    }
+  </style>
+</head>
+
+<body>
+
+  <section class="join-section">
+    <div class="image-container">
+      <div class="piece p1"></div>
+      <div class="piece p2"></div>
+      <div class="piece p3"></div>
+      <div class="piece p4"></div>
+    </div>
+  </section>
+  <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
+  <script src="https://unpkg.com/gsap@3/dist/ScrollTrigger.min.js"></script>
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    gsap.timeline({
+      scrollTrigger: {
+        trigger: ".join-section",
+        start: "top top",
+        end: "+=150%",
+        scrub: 1.5,
+        pin: true,
+        anticipatePin: 1
+      }
+
+    })
+      .from(".p1", { x: -vw, y: -vh })
+      .from(".p2", { x: vw, y: -vh }, "<")
+      .from(".p3", { x: -vw, y: vh }, "<")
+      .from(".p4", { x: vw, y: vh }, "<");
+
+  </script>
+</body>
+
+</html>
