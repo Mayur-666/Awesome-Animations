@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Electric Cataclysm — Interactive</title>
+<style>
+html, body {
+  margin: 0;
+  background: black;
+  overflow: hidden;
+}
+canvas { display: block; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
+
+const particles = [];
+const MAX = 10;
+const SPAWN_DELAY = 300;
+let lastSpawn = 0;
+
+// ---------- UTIL ----------
+function randomColor() {
+  const h = Math.floor(Math.random() * 360);
+  return `hsl(${h}, 100%, 70%)`;
+}
+
+// ---------- PARTICLE ----------
+class Particle {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.vx = (Math.random() - 0.5) * 1.2;
+    this.vy = (Math.random() - 0.5) * 1.2;
+    this.boostX = 0;
+    this.boostY = 0;
+    this.boostLife = 0;
+    this.r = 6;
+    this.mass = 1;
+    this.color = randomColor();
+  }
+
+  applyBoost(dx, dy) {
+    const len = Math.hypot(dx, dy) || 1;
+    this.boostX = (dx / len) * 1.2;
+    this.boostY = (dy / len) * 1.2;
+    this.boostLife = 90; // frames
+  }
+
+  update() {
+    // apply velocity + temporary boost
+    this.x += this.vx + this.boostX;
+    this.y += this.vy + this.boostY;
+
+    // decay boost over time
+    if (this.boostLife > 0) {
+this.boostX *= 0.99;
+this.boostY *= 0.99;
+
+        this.boostLife--;
+    } else {
+        this.boostX = 0;
+        this.boostY = 0;
+    }
+
+    // wall bounce
+    if (this.x < this.r) { this.x = this.r; this.vx *= -1; }
+    if (this.x > canvas.width - this.r) { this.x = canvas.width - this.r; this.vx *= -1; }
+    if (this.y < this.r) { this.y = this.r; this.vy *= -1; }
+    if (this.y > canvas.height - this.r) { this.y = canvas.height - this.r; this.vy *= -1; }
+}
+
+
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ---------- SPAWN ----------
+function spawn(t) {
+  if (t - lastSpawn > SPAWN_DELAY && particles.length < MAX) {
+    particles.push(new Particle());
+    lastSpawn = t;
+  }
+}
+
+// ---------- LIGHTNING ----------
+function bolt(x1, y1, x2, y2, depth) {
+  if (depth === 0) {
+    ctx.lineTo(x2, y2);
+    return;
+  }
+  const mx = (x1 + x2) / 2 + (Math.random() - 0.5) * 60;
+  const my = (y1 + y2) / 2 + (Math.random() - 0.5) * 60;
+  bolt(x1, y1, mx, my, depth - 1);
+  bolt(mx, my, x2, y2, depth - 1);
+}
+
+function lightning(a, b) {
+  ctx.save();
+
+  ctx.strokeStyle = "rgba(80,180,255,0.35)";
+  ctx.lineWidth = 6;
+  ctx.shadowColor = "#6cf";
+  ctx.shadowBlur = 40;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  bolt(a.x, a.y, b.x, b.y, 5);
+  ctx.stroke();
+
+  ctx.strokeStyle = "rgba(220,250,255,1)";
+  ctx.lineWidth = 1.8;
+  ctx.shadowBlur = 0;
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  bolt(a.x, a.y, b.x, b.y, 5);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// ---------- PHYSICS ----------
+function resolveCollision(p, q) {
+  const dx = q.x - p.x;
+  const dy = q.y - p.y;
+  const dist = Math.hypot(dx, dy);
+  const minDist = p.r + q.r;
+  if (dist === 0 || dist >= minDist) return;
+
+  const nx = dx / dist;
+  const ny = dy / dist;
+
+  const overlap = (minDist - dist) / 2;
+  p.x -= nx * overlap;
+  p.y -= ny * overlap;
+  q.x += nx * overlap;
+  q.y += ny * overlap;
+
+  const rvx = q.vx - p.vx;
+  const rvy = q.vy - p.vy;
+  const velAlongNormal = rvx * nx + rvy * ny;
+  if (velAlongNormal > 0) return;
+
+  const impulse = -2 * velAlongNormal / 2;
+  const ix = impulse * nx;
+  const iy = impulse * ny;
+
+  p.vx -= ix;
+  p.vy -= iy;
+  q.vx += ix;
+  q.vy += iy;
+
+  lightning(p, q);
+  p.color = randomColor();
+  q.color = randomColor();
+}
+
+// ---------- CLICK INTERACTION ----------
+canvas.addEventListener("click", e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const my = e.clientY - rect.top;
+
+  for (const p of particles) {
+    const d = Math.hypot(p.x - mx, p.y - my);
+    if (d < p.r + 4) {
+      p.applyBoost(p.x - mx, p.y - my);
+      break;
+    }
+  }
+});
+
+// ---------- LOOP ----------
+function loop(t) {
+  ctx.fillStyle = "rgba(0,0,0,0.18)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  spawn(t);
+
+  for (let i = 0; i < particles.length; i++) {
+    const p = particles[i];
+    p.update();
+    p.draw();
+    for (let j = i + 1; j < particles.length; j++) {
+      resolveCollision(p, particles[j]);
+    }
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
+
